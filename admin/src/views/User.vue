@@ -1,3 +1,4 @@
+
 <template>
   <div class="user-container">
     <el-card class="user-card">
@@ -86,91 +87,73 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import dayjs from 'dayjs'
+import { ref, reactive, onMounted } from 'vue';
+import dayjs from 'dayjs';
+import { getUserList, updateUserStatus } from '@/api/user';
 
 // 搜索表单
 const searchForm = reactive({
   phone: '',
   nickname: ''
-})
+});
 
 // 分页参数
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(100)
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
 
 // 用户列表数据
-const userList = ref([
-  {
-    id: 1,
-    nickname: '管理员',
-    phone: '13800138000',
-    avatar: '',
-    role: 1,
-    status: 1,
-    createdAt: '2024-01-01 00:00:00'
-  },
-  {
-    id: 2,
-    nickname: '张三',
-    phone: '13800138001',
-    avatar: '',
-    role: 0,
-    status: 1,
-    createdAt: '2024-01-02 12:00:00'
-  },
-  {
-    id: 3,
-    nickname: '李四',
-    phone: '13800138002',
-    avatar: '',
-    role: 0,
-    status: 0,
-    createdAt: '2024-01-03 18:00:00'
-  }
-])
+const userList = ref([]);
 
 // 格式化日期
 const formatDate = (date) => {
-  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
-}
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+};
+
+// 获取用户列表
+const fetchUserList = async () => {
+  const res = await getUserList({
+    page: currentPage.value,
+    size: pageSize.value,
+    ...searchForm
+  });
+  userList.value = res.data.records;
+  total.value = res.data.total;
+};
 
 // 搜索
 const handleSearch = () => {
-  // 这里需要调用后端API获取数据
-  console.log('搜索条件:', searchForm)
-}
+  fetchUserList();
+};
 
 // 重置表单
 const resetForm = () => {
-  searchForm.phone = ''
-  searchForm.nickname = ''
-  handleSearch()
-}
+  searchForm.phone = '';
+  searchForm.nickname = '';
+  handleSearch();
+};
 
 // 切换用户状态
-const toggleStatus = (user) => {
-  // 这里需要调用后端API更新用户状态
-  user.status = user.status === 1 ? 0 : 1
-  console.log('切换用户状态:', user.id, user.status)
-}
+const toggleStatus = async (user) => {
+  await updateUserStatus({ userId: user.id, status: user.status === 1 ? 0 : 1 });
+  fetchUserList();
+};
 
 // 分页处理
 const handleSizeChange = (size) => {
-  pageSize.value = size
-  handleSearch()
-}
+  pageSize.value = size;
+  fetchUserList();
+};
 
 const handleCurrentChange = (current) => {
-  currentPage.value = current
-  handleSearch()
-}
+  currentPage.value = current;
+  fetchUserList();
+};
 
 // 初始化数据
 onMounted(() => {
-  handleSearch()
-})
+  fetchUserList();
+});
 </script>
 
 <style scoped>

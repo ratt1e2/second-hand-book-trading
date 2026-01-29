@@ -1,3 +1,4 @@
+
 <template>
   <div class="order-container">
     <el-card class="order-card">
@@ -148,55 +149,25 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import dayjs from 'dayjs'
+import { ref, reactive, onMounted } from 'vue';
+import dayjs from 'dayjs';
+import { getOrderList, getOrderDetail } from '@/api/order';
 
-// 搜索表单
 const searchForm = reactive({
   orderNo: '',
   buyerPhone: '',
   status: ''
-})
+});
 
-// 分页参数
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(100)
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
 
-// 订单列表数据
-const orderList = ref([
-  {
-    id: 1,
-    orderNo: '2024010112345678',
-    userId: 2,
-    sellerId: 3,
-    totalAmount: 169.8,
-    actualAmount: 169.8,
-    status: 3,
-    createdAt: '2024-01-01 10:00:00',
-    paymentTime: '2024-01-01 10:05:00',
-    shippingTime: '2024-01-02 14:00:00',
-    confirmTime: '2024-01-05 18:00:00'
-  },
-  {
-    id: 2,
-    orderNo: '2024010212345679',
-    userId: 4,
-    sellerId: 2,
-    totalAmount: 79.9,
-    actualAmount: 79.9,
-    status: 2,
-    createdAt: '2024-01-02 11:00:00',
-    paymentTime: '2024-01-02 11:05:00',
-    shippingTime: '2024-01-03 10:00:00'
-  }
-])
+const orderList = ref([]);
 
-// 对话框状态
-const dialogVisible = ref(false)
-const currentOrder = ref(null)
+const dialogVisible = ref(false);
+const currentOrder = ref(null);
 
-// 获取订单状态文本
 const getStatusText = (status) => {
   const statusMap = {
     0: '待支付',
@@ -206,11 +177,10 @@ const getStatusText = (status) => {
     4: '已取消',
     5: '退款中',
     6: '已退款'
-  }
-  return statusMap[status] || '未知'
-}
+  };
+  return statusMap[status] || '未知';
+};
 
-// 获取订单状态标签类型
 const getStatusType = (status) => {
   const typeMap = {
     0: 'warning',
@@ -220,69 +190,54 @@ const getStatusType = (status) => {
     4: 'danger',
     5: 'warning',
     6: 'danger'
-  }
-  return typeMap[status] || 'info'
-}
+  };
+  return typeMap[status] || 'info';
+};
 
-// 格式化日期
 const formatDate = (date) => {
-  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
-}
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+};
 
-// 搜索
+const fetchOrderList = async () => {
+  const res = await getOrderList({
+    page: currentPage.value,
+    size: pageSize.value,
+    ...searchForm
+  });
+  orderList.value = res.data.records;
+  total.value = res.data.total;
+};
+
 const handleSearch = () => {
-  // 这里需要调用后端API获取数据
-  console.log('搜索条件:', searchForm)
-}
+  fetchOrderList();
+};
 
-// 重置表单
 const resetForm = () => {
-  searchForm.orderNo = ''
-  searchForm.buyerPhone = ''
-  searchForm.status = ''
-  handleSearch()
-}
+  searchForm.orderNo = '';
+  searchForm.buyerPhone = '';
+  searchForm.status = '';
+  fetchOrderList();
+};
 
-// 查看详情
-const viewDetail = (order) => {
-  // 模拟订单详情数据
-  currentOrder.value = {
-    ...order,
-    items: [
-      {
-        bookTitle: 'Java核心技术',
-        bookAuthor: 'Cay S. Horstmann',
-        bookCover: '',
-        price: 89.9,
-        quantity: 1
-      },
-      {
-        bookTitle: 'JavaScript高级程序设计',
-        bookAuthor: 'Matt Frisbie',
-        bookCover: '',
-        price: 79.9,
-        quantity: 1
-      }
-    ]
-  }
-  dialogVisible.value = true
-}
+const viewDetail = async (order) => {
+  const res = await getOrderDetail({ orderId: order.id });
+  currentOrder.value = res.data;
+  dialogVisible.value = true;
+};
 
-// 分页处理
 const handleSizeChange = (size) => {
-  pageSize.value = size
-  handleSearch()
-}
+  pageSize.value = size;
+  fetchOrderList();
+};
 
 const handleCurrentChange = (current) => {
-  currentPage.value = current
-  handleSearch()
-}
+  currentPage.value = current;
+  fetchOrderList();
+};
 
-// 初始化数据
 onMounted(() => {
-  handleSearch()
-})
+  fetchOrderList();
+});
 </script>
 
 <style scoped>

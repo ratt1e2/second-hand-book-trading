@@ -1,3 +1,4 @@
+
 <template>
   <div class="book-audit-container">
     <el-card class="book-audit-card">
@@ -115,54 +116,25 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import dayjs from 'dayjs'
+import { ref, reactive, onMounted } from 'vue';
+import dayjs from 'dayjs';
+import { getBookList, updateBookStatus, getBookDetail } from '@/api/book';
 
-// 搜索表单
 const searchForm = reactive({
   title: '',
   author: '',
   isbn: ''
-})
+});
 
-// 分页参数
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(100)
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
 
-// 书籍列表数据
-const bookList = ref([
-  {
-    id: 1,
-    title: 'Java核心技术',
-    author: 'Cay S. Horstmann',
-    isbn: '9787111612908',
-    price: 89.9,
-    originalPrice: 128,
-    condition: 1,
-    coverImage: '',
-    description: 'Java核心技术，全面介绍Java语言的基础知识和高级特性',
-    createdAt: '2024-01-01 10:00:00'
-  },
-  {
-    id: 2,
-    title: 'JavaScript高级程序设计',
-    author: 'Matt Frisbie',
-    isbn: '9787115524229',
-    price: 79.9,
-    originalPrice: 109,
-    condition: 2,
-    coverImage: '',
-    description: 'JavaScript高级程序设计，深入理解JavaScript的核心概念和应用',
-    createdAt: '2024-01-02 11:00:00'
-  }
-])
+const bookList = ref([]);
 
-// 对话框状态
-const dialogVisible = ref(false)
-const currentBook = ref(null)
+const dialogVisible = ref(false);
+const currentBook = ref(null);
 
-// 获取新旧程度文本
 const getConditionText = (condition) => {
   const conditionMap = {
     1: '九成新',
@@ -170,72 +142,64 @@ const getConditionText = (condition) => {
     3: '七成新',
     4: '六成新',
     5: '五成新及以下'
-  }
-  return conditionMap[condition] || '未知'
-}
+  };
+  return conditionMap[condition] || '未知';
+};
 
-// 格式化日期
 const formatDate = (date) => {
-  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
-}
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+};
 
-// 搜索
+const fetchBookList = async () => {
+  const res = await getBookList({
+    page: currentPage.value,
+    size: pageSize.value,
+    ...searchForm
+  });
+  bookList.value = res.data.records;
+  total.value = res.data.total;
+};
+
 const handleSearch = () => {
-  // 这里需要调用后端API获取数据
-  console.log('搜索条件:', searchForm)
-}
+  fetchBookList();
+};
 
-// 重置表单
 const resetForm = () => {
-  searchForm.title = ''
-  searchForm.author = ''
-  searchForm.isbn = ''
-  handleSearch()
-}
+  searchForm.title = '';
+  searchForm.author = '';
+  searchForm.isbn = '';
+  fetchBookList();
+};
 
-// 审核通过
-const auditPass = (book) => {
-  // 这里需要调用后端API更新书籍状态
-  console.log('审核通过:', book.id)
-  // 从列表中移除
-  const index = bookList.value.findIndex(item => item.id === book.id)
-  if (index !== -1) {
-    bookList.value.splice(index, 1)
-  }
-}
+const auditPass = async (book) => {
+  await updateBookStatus({ bookId: book.id, status: 1 });
+  fetchBookList();
+};
 
-// 审核驳回
-const auditReject = (book) => {
-  // 这里需要调用后端API更新书籍状态
-  console.log('审核驳回:', book.id)
-  // 从列表中移除
-  const index = bookList.value.findIndex(item => item.id === book.id)
-  if (index !== -1) {
-    bookList.value.splice(index, 1)
-  }
-}
+const auditReject = async (book) => {
+  await updateBookStatus({ bookId: book.id, status: 2 });
+  fetchBookList();
+};
 
-// 查看详情
-const viewDetail = (book) => {
-  currentBook.value = book
-  dialogVisible.value = true
-}
+const viewDetail = async (book) => {
+  const res = await getBookDetail({ bookId: book.id });
+  currentBook.value = res.data;
+  dialogVisible.value = true;
+};
 
-// 分页处理
 const handleSizeChange = (size) => {
-  pageSize.value = size
-  handleSearch()
-}
+  pageSize.value = size;
+  fetchBookList();
+};
 
 const handleCurrentChange = (current) => {
-  currentPage.value = current
-  handleSearch()
-}
+  currentPage.value = current;
+  fetchBookList();
+};
 
-// 初始化数据
 onMounted(() => {
-  handleSearch()
-})
+  fetchBookList();
+});
 </script>
 
 <style scoped>

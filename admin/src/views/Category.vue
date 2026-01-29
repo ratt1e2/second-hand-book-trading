@@ -1,3 +1,4 @@
+
 <template>
   <div class="category-container">
     <el-card class="category-card">
@@ -41,7 +42,7 @@
               >
                 {{ scope.row.status === 1 ? '禁用' : '启用' }}
               </el-button>
-              <el-button type="danger" size="small" @click="deleteCategory(scope.row.id)">删除</el-button>
+              <el-button type="danger" size="small" @click="handleDeleteCategory(scope.row.id)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -73,7 +74,7 @@
           <el-input-number v-model="formData.sort" :min="0" :max="9999"></el-input-number>
         </el-form-item>
         <el-form-item label="状态">
-          <el-switch v-model="formData.status" active-value="1" inactive-value="0"></el-switch>
+          <el-switch v-model="formData.status" :active-value="1" :inactive-value="0"></el-switch>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -87,148 +88,79 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import dayjs from 'dayjs'
+import { ref, reactive, onMounted, computed } from 'vue';
+import dayjs from 'dayjs';
+import { getCategoryList, addCategory, updateCategory, deleteCategory, updateCategoryStatus } from '@/api/category';
 
-// 分类列表数据
-const categoryList = ref([
-  {
-    id: 1,
-    name: '教材',
-    parentId: 0,
-    sort: 1,
-    status: 1,
-    createdAt: '2024-01-01 00:00:00'
-  },
-  {
-    id: 2,
-    name: '小说',
-    parentId: 0,
-    sort: 2,
-    status: 1,
-    createdAt: '2024-01-01 00:00:00'
-  },
-  {
-    id: 3,
-    name: '社科',
-    parentId: 0,
-    sort: 3,
-    status: 1,
-    createdAt: '2024-01-01 00:00:00'
-  },
-  {
-    id: 4,
-    name: '计算机',
-    parentId: 0,
-    sort: 4,
-    status: 1,
-    createdAt: '2024-01-01 00:00:00'
-  },
-  {
-    id: 5,
-    name: '文学',
-    parentId: 0,
-    sort: 5,
-    status: 1,
-    createdAt: '2024-01-01 00:00:00'
-  }
-])
+const categoryList = ref([]);
 
-// 父分类列表（用于选择）
 const parentCategoryList = computed(() => {
-  return categoryList.value.filter(item => item.parentId === 0)
-})
+  return categoryList.value.filter(item => item.parentId === 0);
+});
 
-// 对话框状态
-const dialogVisible = ref(false)
-const dialogType = ref('add')
+const dialogVisible = ref(false);
+const dialogType = ref('add');
 
-// 表单数据
 const formData = reactive({
   id: '',
   name: '',
   parentId: 0,
   sort: 0,
-  status: 1
-})
+  status: 1,
+});
 
-// 格式化日期
 const formatDate = (date) => {
-  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
-}
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+};
 
-// 打开添加对话框
+const fetchCategoryList = async () => {
+  const res = await getCategoryList();
+  categoryList.value = res.data;
+};
+
 const openAddDialog = () => {
-  dialogType.value = 'add'
-  // 重置表单
-  formData.id = ''
-  formData.name = ''
-  formData.parentId = 0
-  formData.sort = 0
-  formData.status = 1
-  dialogVisible.value = true
-}
+  dialogType.value = 'add';
+  formData.id = '';
+  formData.name = '';
+  formData.parentId = 0;
+  formData.sort = 0;
+  formData.status = 1;
+  dialogVisible.value = true;
+};
 
-// 打开编辑对话框
 const openEditDialog = (category) => {
-  dialogType.value = 'edit'
-  // 填充表单数据
-  formData.id = category.id
-  formData.name = category.name
-  formData.parentId = category.parentId
-  formData.sort = category.sort
-  formData.status = category.status
-  dialogVisible.value = true
-}
+  dialogType.value = 'edit';
+  formData.id = category.id;
+  formData.name = category.name;
+  formData.parentId = category.parentId;
+  formData.sort = category.sort;
+  formData.status = category.status;
+  dialogVisible.value = true;
+};
 
-// 切换分类状态
-const toggleStatus = (category) => {
-  // 这里需要调用后端API更新分类状态
-  category.status = category.status === 1 ? 0 : 1
-  console.log('切换分类状态:', category.id, category.status)
-}
+const toggleStatus = async (category) => {
+  await updateCategoryStatus({ categoryId: category.id, status: category.status === 1 ? 0 : 1 });
+  fetchCategoryList();
+};
 
-// 删除分类
-const deleteCategory = (categoryId) => {
-  // 这里需要调用后端API删除分类
-  const index = categoryList.value.findIndex(item => item.id === categoryId)
-  if (index !== -1) {
-    categoryList.value.splice(index, 1)
-  }
-  console.log('删除分类:', categoryId)
-}
+const handleDeleteCategory = async (categoryId) => {
+  await deleteCategory({ categoryId });
+  fetchCategoryList();
+};
 
-// 提交表单
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (dialogType.value === 'add') {
-    // 添加分类
-    const newCategory = {
-      id: Date.now(), // 模拟ID生成
-      name: formData.name,
-      parentId: formData.parentId,
-      sort: formData.sort,
-      status: formData.status,
-      createdAt: new Date().toISOString()
-    }
-    categoryList.value.push(newCategory)
+    await addCategory(formData);
   } else {
-    // 编辑分类
-    const index = categoryList.value.findIndex(item => item.id === formData.id)
-    if (index !== -1) {
-      categoryList.value[index].name = formData.name
-      categoryList.value[index].parentId = formData.parentId
-      categoryList.value[index].sort = formData.sort
-      categoryList.value[index].status = formData.status
-    }
+    await updateCategory(formData);
   }
-  dialogVisible.value = false
-}
+  dialogVisible.value = false;
+  fetchCategoryList();
+};
 
-// 初始化数据
 onMounted(() => {
-  // 这里需要调用后端API获取分类列表
-  console.log('初始化分类数据')
-})
+  fetchCategoryList();
+});
 </script>
 
 <style scoped>

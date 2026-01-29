@@ -1,0 +1,139 @@
+/* login.wxss */
+
+.container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f5f7fa;
+  padding: 40rpx;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 400rpx;
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  box-shadow: 0 2rpx 12rpx 0 rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+
+.logo-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #409EFF;
+}
+
+.login-form {
+  margin-bottom: 32rpx;
+}
+
+.form-item {
+  margin-bottom: 24rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.form-input {
+  width: 100%;
+  height: 60rpx;
+  border: 1rpx solid #dcdfe6;
+  border-radius: 8rpx;
+  padding: 0 16rpx;
+  font-size: 14px;
+}
+
+.form-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 32rpx;
+}
+
+.forgot-password {
+  font-size: 12px;
+  color: #409EFF;
+}
+
+.btn-primary {
+  width: 100%;
+  height: 60rpx;
+  background-color: #409EFF;
+  color: #fff;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-bottom: 16rpx;
+}
+
+.register-link {
+  display: flex;
+  justify-content: center;
+  font-size: 14px;
+  color: #666;
+}
+
+.register-btn {
+  color: #409EFF;
+  margin-left: 8rpx;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 32rpx 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1rpx;
+  background-color: #f0f0f0;
+}
+
+.divider-text {
+  padding: 0 16rpx;
+  font-size: 12px;
+  color: #999;
+}
+
+.wechat-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.wechat-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: #07C160;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.wechat-icon image {
+  width: 48rpx;
+  height: 48rpx;
+}
+
+.wechat-text {
+  font-size: 14px;
+  color: #333;
+}

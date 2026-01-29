@@ -1,3 +1,4 @@
+
 <template>
   <div class="register-container">
     <el-card class="register-card">
@@ -25,71 +26,79 @@
           <el-button type="primary" class="register-button" @click="handleRegister" :loading="loading">注册</el-button>
         </el-form-item>
         
-        <el-form-item class="login-link">
-          <span>已有账号？</span>
-          <el-button type="text" @click="goToLogin">去登录</el-button>
-        </el-form-item>
+        <div class="login-link">
+          <p>已有账号？ <router-link to="/login">立即登录</router-link></p>
+        </div>
       </el-form>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
+import { register } from '@/api/user';
 
-const router = useRouter()
-const registerFormRef = ref(null)
-const loading = ref(false)
+const router = useRouter();
+const registerFormRef = ref(null);
+const loading = ref(false);
 
 const registerForm = reactive({
   username: '',
   password: '',
   confirmPassword: ''
-})
+});
 
-const rules = {
+const validatePass = (rule, value, callback) => {
+  if (value === '') {
+    callback(new Error('请输入密码'));
+  } else {
+    if (registerForm.confirmPassword !== '') {
+      if (!registerFormRef.value) return;
+      registerFormRef.value.validateField('confirmPassword');
+    }
+    callback();
+  }
+};
+const validatePass2 = (rule, value, callback) => {
+  if (value === '') {
+    callback(new Error('请再次输入密码'));
+  } else if (value !== registerForm.password) {
+    callback(new Error("两次输入的密码不一致!"));
+  } else {
+    callback();
+  }
+};
+
+const rules = reactive({
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度在3到20个字符之间', trigger: 'blur' }
+    { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
   ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度至少为6个字符', trigger: 'blur' }
-  ],
-  confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
-    {
-      validator: (rule, value, callback) => {
-        if (value !== registerForm.password) {
-          callback(new Error('两次输入的密码不一致'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'blur'
-    }
-  ]
-}
+  password: [{ validator: validatePass, trigger: 'blur' }],
+  confirmPassword: [{ validator: validatePass2, trigger: 'blur' }]
+});
 
 const handleRegister = async () => {
-  const valid = await registerFormRef.value.validate()
-  if (!valid) return
-  
-  loading.value = true
-  
-  // 模拟注册请求
-  setTimeout(() => {
-    loading.value = false
-    console.log('注册成功:', registerForm.username)
-    // 注册成功后跳转到登录页面
-    router.push('/login')
-  }, 1000)
-}
-
-const goToLogin = () => {
-  router.push('/login')
-}
+  if (!registerFormRef.value) return;
+  await registerFormRef.value.validate(async (valid) => {
+    if (valid) {
+      loading.value = true;
+      try {
+        await register({ username: registerForm.username, password: registerForm.password });
+        ElMessage.success('注册成功！即将跳转到登录页。');
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        loading.value = false;
+      }
+    }
+  });
+};
 </script>
 
 <style scoped>
@@ -102,8 +111,7 @@ const goToLogin = () => {
 }
 
 .register-card {
-  width: 400px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  width: 450px;
 }
 
 .register-title {
@@ -116,13 +124,12 @@ const goToLogin = () => {
 }
 
 .register-title p {
-  margin: 0;
   color: #909399;
   font-size: 14px;
 }
 
 .register-form {
-  margin-top: 20px;
+  padding: 0 20px;
 }
 
 .register-button {
@@ -130,11 +137,19 @@ const goToLogin = () => {
 }
 
 .login-link {
-  text-align: center;
   margin-top: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #606266;
 }
 
-.login-link span {
-  color: #606266;
+.login-link a {
+  color: #409eff;
+  text-decoration: none;
+}
+
+/* 确保输入框宽度一致 */
+.register-form .el-form-item .el-input {
+    width: 100%;
 }
 </style>

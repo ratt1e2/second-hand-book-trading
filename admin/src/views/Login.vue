@@ -1,3 +1,4 @@
+
 <template>
   <div class="login-container">
     <el-card class="login-card">
@@ -18,60 +19,58 @@
         </el-form-item>
         
         <el-form-item>
-          <el-button type="primary" class="login-button" @click="handleLogin" :loading="loading">登录</el-button>
+          <el-button type="primary" @click="handleLogin" :loading="loading" class="login-button">登录</el-button>
         </el-form-item>
         
-        <el-form-item class="register-link">
-          <span>还没有账号？</span>
-          <el-button type="text" @click="goToRegister">去注册</el-button>
-        </el-form-item>
+        <div class="register-link">
+          <p>还没有账号？ <router-link to="/register">立即注册</router-link></p>
+        </div>
       </el-form>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
+import { login } from '@/api/user';
 
-const router = useRouter()
-const loginFormRef = ref(null)
-const loading = ref(false)
+const router = useRouter();
+const loginFormRef = ref(null);
+const loading = ref(false);
 
 const loginForm = reactive({
-  username: 'admin',
-  password: '123456'
-})
+  username: '',
+  password: ''
+});
 
-const rules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
-  ]
-}
+const rules = reactive({
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+});
 
 const handleLogin = async () => {
-  const valid = await loginFormRef.value.validate()
-  if (!valid) return
-  
-  loading.value = true
-  
-  // 模拟登录请求
-  setTimeout(() => {
-    loading.value = false
-    // 保存登录状态
-    localStorage.setItem('isLoggedIn', 'true')
-    localStorage.setItem('username', loginForm.username)
-    // 跳转到数据概览页面
-    router.push('/dashboard')
-  }, 1000)
-}
-
-const goToRegister = () => {
-  router.push('/register')
-}
+  if (!loginFormRef.value) return;
+  await loginFormRef.value.validate(async (valid) => {
+    if (valid) {
+      loading.value = true;
+      try {
+        const res = await login(loginForm);
+        // 假设后端返回的数据在 res.data 中，包含 token 和用户信息
+        localStorage.setItem('token', res.data.token); 
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        ElMessage.success('登录成功');
+        router.push('/'); // 跳转到首页或仪表盘
+      } catch (error) {
+        // ElMessage.error('登录失败，请检查用户名和密码');
+        console.error(error);
+      } finally {
+        loading.value = false;
+      }
+    }
+  });
+};
 </script>
 
 <style scoped>
@@ -84,8 +83,7 @@ const goToRegister = () => {
 }
 
 .login-card {
-  width: 400px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  width: 450px;
 }
 
 .login-title {
@@ -98,13 +96,12 @@ const goToRegister = () => {
 }
 
 .login-title p {
-  margin: 0;
   color: #909399;
   font-size: 14px;
 }
 
 .login-form {
-  margin-top: 20px;
+  padding: 0 20px;
 }
 
 .login-button {
@@ -112,11 +109,18 @@ const goToRegister = () => {
 }
 
 .register-link {
-  text-align: center;
   margin-top: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #606266;
 }
 
-.register-link span {
-  color: #606266;
+.register-link a {
+  color: #409eff;
+  text-decoration: none;
+}
+/* 确保输入框宽度一致 */
+.login-form .el-form-item .el-input {
+    width: 100%;
 }
 </style>
